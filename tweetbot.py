@@ -1,12 +1,11 @@
 import tweepy, requests, os
 
-USERNAME = 'WildVistas'
+USER_ID = os.getenv("TWITTER_USER_ID")
 BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 client = tweepy.Client(bearer_token=BEARER_TOKEN)
-user = client.get_user(username=USERNAME).data
-tweets = client.get_users_tweets(id=user.id, max_results=5)
+tweets = client.get_users_tweets(id=USER_ID, max_results=5)
 
 if not tweets.data:
     exit()
