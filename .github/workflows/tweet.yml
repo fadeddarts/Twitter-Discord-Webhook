@@ -2,7 +2,7 @@ name: Post Latest Tweet to Discord
 
 on:
   schedule:
-    - cron: "*/5 * * * *"  # Every 5 minutes
+    - cron: "*/15 * * * *"  # Every 5 minutes
   workflow_dispatch:       # Manual trigger option
 
 jobs:
