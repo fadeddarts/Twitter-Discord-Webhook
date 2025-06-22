@@ -20,7 +20,7 @@ except FileNotFoundError:
     last_id = None
 
 if tweet_id != last_id:
-    tweet_url = f"https://twitter.com/{USERNAME}/status/{tweet_id}"
+    tweet_url = f"https://twitter.com/i/web/status/{tweet_id}"
     requests.post(WEBHOOK_URL, json={"content": f"{tweet_url}"})
 
     with open("last_tweet.txt","w") as f:
