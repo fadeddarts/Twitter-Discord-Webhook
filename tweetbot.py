@@ -11,10 +11,24 @@ USER_ID = os.getenv("TWITTER_USER_ID")
 client = tweepy.Client(bearer_token=BEARER_TOKEN)
 
 # Get the latest tweet from the user
-tweets = client.get_users_tweets(id=USER_ID, max_results=1)
-if not tweets.data:
-    print("No tweets found.")
-    exit()
+import time
+import tweepy.errors
+
+MAX_RETRIES = 3
+retry_delay = 60  # seconds
+retry_count = 0
+
+while retry_count < MAX_RETRIES:
+    try:
+        tweets = client.get_users_tweets(id=USER_ID, max_results=1)
+        break  # Success — exit retry loop
+    except tweepy.errors.TooManyRequests:
+        retry_count += 1
+        print(f"Rate limit hit. Retry {retry_count}/{MAX_RETRIES} in {retry_delay} seconds...")
+        time.sleep(retry_delay)
+else:
+    print("Exceeded max retries due to rate limiting. Exiting.")
+    exit(1)
 
 latest = tweets.data[0]
 tweet_id = str(latest.id)
