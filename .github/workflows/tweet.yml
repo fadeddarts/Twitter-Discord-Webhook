@@ -27,7 +27,7 @@ jobs:
         env:
           TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: python tweet_to_discord.py
+        run: python tweetbot.py
 
       - name: Configure Git
         run: |
