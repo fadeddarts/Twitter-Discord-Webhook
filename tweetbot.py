@@ -43,7 +43,7 @@ new_tweets.sort(key=lambda x: int(x.id))  # oldest to newest
 # --- Post each new tweet to Discord ---
 for tweet in new_tweets:
     tweet_url = f"https://twitter.com/i/web/status/{tweet.id}"
-    data = {"content": f"🕊️ New tweet:\n{tweet_url}"}
+    data = {"content": f"{tweet_url}"}
     response = requests.post(WEBHOOK_URL, json=data)
 
     if response.status_code == 204:
