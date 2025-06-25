@@ -2,7 +2,7 @@ name: Post Tweets to Discord
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Runs every 10 minutes
+    - cron: '*/10 * * * *'  # every 10 minutes
   workflow_dispatch:
 
 jobs:
@@ -35,19 +35,20 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Set GitHub remote with PAT
+      - name: Commit and push changes to auto-update branch
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
-
-      - name: Debug and push changes
-        run: |
-          echo "Git remote URL:"
-          git remote -v
-          echo "Current branch:"
-          git branch --show-current
-
           git add last_tweet.txt
           git commit -m "Update last_tweet.txt" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} HEAD:auto-update --force
 
-          echo "Pushing changes..."
-          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} HEAD:main && echo "Push successful" || (echo "Push failed" && exit 1)
+      - name: Create or update Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: auto-update
+          base: main
+          title: "Auto-update last_tweet.txt"
+          body: |
+            This PR is automatically created by the GitHub Actions workflow to update last_tweet.txt.
+          commit-message: "Update last_tweet.txt"
+          draft: false
