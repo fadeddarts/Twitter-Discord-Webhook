@@ -39,9 +39,17 @@ jobs:
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
 
-      - name: Commit and push if last_tweet.txt changed
+      - name: Debug and push changes
         run: |
+          echo "Git remote URL:"
+          git remote -v
+          echo "Current branch:"
+          git branch --show-current
+      
           git add last_tweet.txt
           git commit -m "Update last_tweet.txt" || echo "No changes to commit"
-          git push
+      
+          echo "Pushing changes..."
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} HEAD:main && echo "Push successful" || (echo "Push failed" && exit 1)
+       
 
