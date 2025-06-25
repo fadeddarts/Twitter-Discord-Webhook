@@ -1,56 +1,61 @@
 import tweepy
 import requests
 import os
+import time
+import tweepy.errors
 
-# Get credentials from GitHub Actions secrets
+# --- Configuration ---
 BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 USER_ID = os.getenv("TWITTER_USER_ID")
 
-# Create Tweepy client
+# --- Tweepy Client ---
 client = tweepy.Client(bearer_token=BEARER_TOKEN)
 
-# Get the latest tweet from the user
-import time
-import tweepy.errors
-
+# --- Retry logic for rate limits ---
 MAX_RETRIES = 3
-retry_delay = 60  # seconds
+retry_delay = 60
 retry_count = 0
 
 while retry_count < MAX_RETRIES:
     try:
-        tweets = client.get_users_tweets(id=USER_ID, max_results=5)
-        break  # Success — exit retry loop
+        tweets = client.get_users_tweets(id=USER_ID, max_results=10)
+        break
     except tweepy.errors.TooManyRequests:
         retry_count += 1
         print(f"Rate limit hit. Retry {retry_count}/{MAX_RETRIES} in {retry_delay} seconds...")
         time.sleep(retry_delay)
 else:
-    print("Exceeded max retries due to rate limiting. Exiting.")
+    print("Exceeded max retries. Exiting.")
     exit(1)
 
-latest = tweets.data[0]
-tweet_id = str(latest.id)
-
-# Check last posted tweet ID from file
+# --- Read last seen tweet ID ---
 try:
     with open("last_tweet.txt", "r") as f:
-        last_id = f.read().strip()
-except FileNotFoundError:
-    last_id = "0"
+        last_id = int(f.read().strip())
+except (FileNotFoundError, ValueError):
+    last_id = 0
 
-# Post to Discord if it's a new tweet
-if tweet_id != last_id:
-    tweet_url = f"https://twitter.com/i/web/status/{tweet_id}"
+# --- Filter new tweets ---
+new_tweets = [t for t in tweets.data if int(t.id) > last_id] if tweets.data else []
+new_tweets.sort(key=lambda x: int(x.id))  # oldest to newest
+
+# --- Post each new tweet to Discord ---
+for tweet in new_tweets:
+    tweet_url = f"https://twitter.com/i/web/status/{tweet.id}"
     data = {"content": f"🕊️ New tweet:\n{tweet_url}"}
     response = requests.post(WEBHOOK_URL, json=data)
 
     if response.status_code == 204:
-        print("Tweet posted to Discord.")
-        with open("last_tweet.txt", "w") as f:
-            f.write(tweet_id)
+        print(f"Posted tweet {tweet.id} to Discord.")
+        last_id = max(last_id, int(tweet.id))
     else:
-        print(f"Discord error: {response.status_code}")
+        print(f"Failed to post tweet {tweet.id}: HTTP {response.status_code}")
+
+# --- Update last_tweet.txt ---
+if new_tweets:
+    with open("last_tweet.txt", "w") as f:
+        f.write(str(last_id))
 else:
-    print("No new tweet.")
+    print("No new tweets to post.")
+
