@@ -13,8 +13,8 @@ USER_ID = os.getenv("TWITTER_USER_ID")
 client = tweepy.Client(bearer_token=BEARER_TOKEN)
 
 # --- Retry logic for rate limits ---
-MAX_RETRIES = 3
-retry_delay = 60
+MAX_RETRIES = 1
+retry_delay = 30
 retry_count = 0
 
 while retry_count < MAX_RETRIES:
