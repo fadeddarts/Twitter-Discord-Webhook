@@ -19,7 +19,12 @@ retry_count = 0
 
 while retry_count < MAX_RETRIES:
     try:
-        tweets = client.get_users_tweets(id=USER_ID, max_results=10)
+        tweets = client.get_users_tweets(
+        id=USER_ID,
+        max_results=10,
+        since_id=last_id if last_id > 0 else None
+            )
+        
         break
     except tweepy.errors.TooManyRequests:
         retry_count += 1
